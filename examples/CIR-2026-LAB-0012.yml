@@ -1,0 +1,57 @@
+# Internal issue: pentest finding, no CVE (fictional organization)
+cir_version: "0.1"
+
+meta:
+  id: CIR-2026-LAB-0012
+  revision: 2
+  title: "IDOR on invoice export endpoint in billing-api"
+  status: published
+  created: 2026-09-28
+  updated: 2026-10-05
+  tlp: AMBER
+  authors:
+    - name: "Red team"
+      org: "Acme"
+
+core:
+  tlp: AMBER
+  summary: "Any authenticated user can export another customer's invoices by changing the invoice ID."
+  details: |
+    `GET /api/v2/invoices/{id}/export` checks authentication but not ownership.
+    Invoice IDs are sequential, making enumeration trivial.
+  disclosed: 2026-09-28
+
+  identifiers:
+    - type: internal
+      id: "PENTEST-2026-Q3-07"
+
+  references:
+    - type: report
+      url: https://git.acme.internal/sec/pentests/2026-q3#finding-07
+    - type: fix
+      url: https://git.acme.internal/billing/billing-api/-/merge_requests/482
+
+  affected:
+    - product:
+        vendor: Acme
+        name: billing-api
+      ranges:
+        - type: git
+          repo: https://git.acme.internal/billing/billing-api
+          events:
+            - introduced: "a3f9c21"
+            - fixed: "e71b0d4"
+
+  weaknesses: [CWE-639]
+
+  severity:
+    - type: cvss_v3.1
+      vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N"
+      score: 6.5
+      source: issuer
+
+  remediations:
+    - type: patch
+      description: "Ownership check added on invoice export; IDs moved to UUIDv7."
+      status: available
+      date: 2026-10-04

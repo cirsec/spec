@@ -1,0 +1,9 @@
+# CIR public authorities registry
+# A public CIR code (starting with 0) must be listed here to be valid.
+# New authorities are added through a pull request reviewed by the maintainers.
+
+authorities:
+  - code: "00"
+    name: "CIR Project"
+    contact: ""
+    scope: "Root authority, default issuer for public records"

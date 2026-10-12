@@ -1,0 +1,249 @@
+# CIR - Cyber Issue Record template (draft v0.1)
+# Full template with every field. Remove or leave empty what you don't use.
+# Each layer has its own TLP: export to an audience = drop the layers it can't see.
+
+cir_version: "0.1"
+
+# --- META: identity and lifecycle of the record ---
+meta:
+  id: ""                # CIR-YYYY-CODE-NNNN, CODE starting with 0 = public, else internal
+  revision: 1           # integer, bump on every update
+  title: ""
+  status: ""            # draft | published | rejected | withdrawn
+  created: ""           # YYYY-MM-DD
+  updated: ""           # YYYY-MM-DD
+  tlp: ""               # ceiling: no layer can be less restrictive than this
+  based_on: ""          # parent CIR id, when this record extends another one
+  aliases: []           # slugs, e.g. argoapp-upload-rce
+  authors:
+    - name: ""
+      contact: ""
+      org: ""
+  history:
+    - date: ""
+      author: ""
+      change: ""
+
+# --- LAYER 1, CORE: what the issue is (reference existing standards, don't redefine) ---
+core:
+  tlp: CLEAR
+  summary: ""             # one line
+  details: ""             # markdown
+  disclosed: ""           # YYYY-MM-DD, public disclosure (or internal report date)
+  identifiers:            # external IDs designating this issue
+    - type: ""            # cve | ghsa | osv | vendor | internal | other
+      id: ""
+  references:
+    - type: ""            # advisory | fix | report | article | package | web | other
+      url: ""
+  affected:               # one entry per product/package (OSV model)
+    - product:
+        vendor: ""
+        name: ""
+        purl: ""
+        cpe: ""
+      ranges:
+        - type: ""        # semver | ecosystem | git
+          repo: ""        # required when type = git
+          events:         # ordered: introduced / fixed / last_affected
+            - introduced: ""
+            - fixed: ""
+      versions: []        # explicit versions, when no range applies
+  weaknesses: []          # CWE-xx
+  severity:
+    - type: ""            # cvss_v3.1 | cvss_v4.0
+      vector: ""
+      score:              # must match the vector
+      source: ""          # nvd | vendor | issuer
+  remediations:
+    - type: ""            # upgrade | patch | config | workaround | none
+      description: ""
+      status: ""          # available | planned | none
+      date: ""            # YYYY-MM-DD
+      reference: ""       # URL
+
+# --- LAYER 2, THREAT INTEL: who exploits it, how, since when ---
+# Everything is dated and sourced. Entities are references, not descriptions.
+threat_intel:
+  tlp: CLEAR
+  updated: ""               # YYYY-MM-DD, freshness of this layer; also the snapshot date of signals
+  exploitation:
+    maturity: ""            # none | poc | functional | weaponized
+    in_the_wild: ""         # true | false | unknown
+    first_seen: ""          # YYYY-MM-DD, first observed exploitation
+    exploits:
+      - type: ""            # poc | module | template | kit | writeup
+        source: ""          # github | exploitdb | metasploit | nuclei | other
+        url: ""
+        date: ""
+  priority:                 # public priority, computed (see SPEC.md, Scoring)
+    value:                  # 0-10
+    level: ""               # low | medium | high | critical
+    method: "cir-risk/0.1"
+  signals:                  # snapshots of external feeds, as of threat_intel.updated
+    kev:
+      listed:               # true | false
+      date_added: ""
+      ransomware_use: ""    # known | unknown
+    epss:
+      score:
+      percentile:
+  actors:
+    - refs:                 # same entity in several namespaces
+        - type: ""          # mitre | mlab | misp | malpedia | other
+          id: ""
+      name: ""
+      confidence: ""        # low | medium | high | critical
+      first_seen: ""
+      sources: []           # ids from sources[]
+  malware:
+    - refs: []
+      name: ""
+      family_type: ""       # ransomware | botnet | miner | rat | loader | webshell | other
+      confidence: ""
+      sources: []
+  campaigns:
+    - refs: []
+      name: ""
+      confidence: ""
+      sources: []
+  attack:                   # technique/tactic pairs
+    - technique: ""         # Txxxx(.xxx)
+      tactic: ""            # TA00xx
+  targeting:
+    sectors: []             # all | finance | health | energy | government | ...
+    regions: []             # ISO 3166-1 alpha-2
+  iocs:                     # inline, small volume (~50 max recommended)
+    - type: ""              # ip | domain | url | sha256 | sha1 | md5 | pattern | other
+      value: ""
+      first_seen: ""
+      last_seen: ""
+      confidence: ""
+      sources: []
+  ioc_bundles:              # large volume, external
+    - format: ""            # stix | misp | csv
+      url: ""
+  detections:               # public detection rules
+    - format: ""            # sigma | yara | suricata | snort | nuclei | kql | spl
+      name: ""
+      url: ""
+  timeline:
+    - date: ""
+      event: ""
+      sources: []
+  sources:                  # declared once, referenced everywhere by id
+    - id: ""                # local to the record, e.g. s1
+      name: ""
+      url: ""
+      date: ""
+      reliability: ""       # A-F (Admiralty), optional
+
+# --- LAYER 3, POSTURE: state of ONE entity facing the issue, in generic terms ---
+# Shareable with a group/sector CERT. Enums only: no free text, no numbers, no names.
+posture:
+  tlp: AMBER
+  updated: ""                 # YYYY-MM-DD
+  entity: ""                  # pseudonymous ID assigned by the receiving CERT, never the name
+  status:                     # aligned with VEX
+    state: ""                 # not_affected | affected | mitigated | fixed | under_investigation
+    justification: ""         # when not_affected: component_not_present | vulnerable_code_not_present |
+                              # vulnerable_code_not_in_execute_path |
+                              # vulnerable_code_cannot_be_controlled_by_adversary |
+                              # inline_mitigations_already_exist
+  prerequisites:              # what exploitation actually requires here (not theoretical CVSS)
+    attack_vector: ""         # network | adjacent | local | physical
+    privileges: ""            # none | low | high
+    user_interaction:         # true | false
+    configuration: ""         # default | non_default
+    conditions: []            # feature_enabled | specific_os | specific_version |
+                              # network_position | valid_account | other
+  exposure:
+    reachability: ""          # internet | partner | internal | isolated | not_deployed
+    prevalence: ""            # none | rare | common | widespread
+  controls:
+    - control: ""             # segmentation | waf | ips | edr | mfa | egress_filtering |
+                              # hardening | app_allowlisting | virtual_patching | other
+      effect: ""              # blocks | reduces | detects
+      coverage: ""            # partial | full
+      validated:              # true | false (tested vs assumed)
+  detection:
+    capability: ""            # none | partial | full
+    layers: []                # network | endpoint | logs | waf | application
+    validated:                # true | false
+  impact:
+    enables: []               # code_execution | data_access | privilege_escalation |
+                              # lateral_movement | persistence | denial_of_service
+    blast_radius: ""          # component | host | segment | domain | organization | supply_chain
+    chained_with: []          # CIR or CVE IDs
+  remediation:
+    feasibility: ""           # easy | moderate | hard | blocked
+    constraints: []           # legacy | vendor_dependency | downtime_required |
+                              # certification | third_party_managed
+
+# --- LAYER 4, CONTEXT: what it means for this org, who decided what, who does what ---
+# Never leaves the organization. Free text and names allowed, after structured fields.
+context:
+  tlp: RED
+  updated: ""                 # YYYY-MM-DD
+  org: ""
+  assets:                     # key assets, inline
+    - ref: ""                 # CMDB ID
+      name: ""
+      type: ""                # server | workstation | application | database | network_device |
+                              # cloud_resource | container | saas | ot | other
+      environment: ""         # prod | preprod | dev | test
+      exposure: ""            # internet | partner | internal | isolated
+      criticality: ""         # low | medium | high | critical
+      data_classification: "" # public | internal | confidential | secret
+      owner: ""
+      state: ""               # affected | mitigated | fixed | not_affected
+  asset_selectors:            # large volume: query against the source of truth
+    - source: ""              # cmdb | edr | scanner | cloud | other
+      query: ""
+      matched:                # number of assets matched at context.updated
+  exploitation:               # did it happen HERE?
+    status: ""                # none | suspected | confirmed
+    incident_ref: ""          # IR ticket, when suspected or confirmed
+  business_impact:
+    confidentiality: ""       # none | low | medium | high | critical
+    integrity: ""
+    availability: ""
+    services: []              # impacted business processes
+    data_at_risk: []          # personal | financial | health | credentials | ip | other
+    regulatory: []            # gdpr | nis2 | dora | pci_dss | hds | other
+  decision:
+    action: ""                # fix | mitigate | accept | transfer | monitor | false_positive
+    justification: ""
+    decided_by: ""
+    decided_on: ""            # YYYY-MM-DD
+    review_on: ""             # YYYY-MM-DD, required for accept | transfer | monitor
+    approved_by: ""
+  remediation:
+    owner: ""                 # team
+    assignee: ""
+    sla: ""                   # internal SLA class, e.g. P1-7d
+    due: ""                   # YYYY-MM-DD
+    status: ""                # open | in_progress | resolved | verified | reopened
+    tickets:
+      - system: ""            # jira | plane | servicenow | gitlab | github | other
+        id: ""
+        url: ""
+    verified_on: ""
+    verified_by: ""
+    verification_method: ""   # rescan | pentest | manual | other
+  communication:              # who was informed, when, how
+    - audience: ""            # soc | it_ops | dev | ciso | management | legal | dpo |
+                              # business | cert | vendor | regulator
+      date: ""
+      channel: ""             # email | ticket | meeting | chat | report | other
+      by: ""
+  score:                      # org risk, computed (see SPEC.md, Scoring)
+    value:                    # 0-10
+    level: ""                 # none | low | medium | high | critical
+    method: "cir-risk/0.1"
+  notes:
+    - date: ""
+      author: ""
+      text: ""
+
+tags: []

@@ -1,0 +1,116 @@
+# Internal record extending a public one (fictional organization).
+# core and threat_intel are inherited from the parent (meta.based_on).
+# Exported to the group CERT, the TLP filter keeps posture (AMBER) and drops context (RED).
+cir_version: "0.1"
+
+meta:
+  id: CIR-2021-GRP-0003
+  revision: 3
+  title: "Log4Shell, subsidiary GRP-ENT-07"
+  status: published
+  created: 2021-12-11
+  updated: 2021-12-14
+  tlp: AMBER
+  based_on: CIR-2021-00-0001
+
+posture:
+  tlp: AMBER
+  updated: 2021-12-14
+  entity: GRP-ENT-07
+
+  status:
+    state: mitigated
+
+  prerequisites:
+    attack_vector: network
+    privileges: none
+    user_interaction: false
+    configuration: default
+    conditions: []
+
+  exposure:
+    reachability: internet
+    prevalence: common
+
+  controls:
+    - { control: waf, effect: reduces, coverage: partial, validated: true }
+    - { control: egress_filtering, effect: blocks, coverage: full, validated: true }
+    - { control: edr, effect: detects, coverage: partial, validated: false }
+
+  detection:
+    capability: partial
+    layers: [waf, network, endpoint]
+    validated: true
+
+  impact:
+    enables: [code_execution, lateral_movement]
+    blast_radius: segment
+    chained_with: []
+
+  remediation:
+    feasibility: hard
+    constraints: [vendor_dependency, legacy]
+
+context:
+  tlp: RED
+  updated: 2021-12-14
+  org: "Filiale Sud"
+
+  assets:
+    - ref: CMDB-004812
+      name: "portail-clients"
+      type: application
+      environment: prod
+      exposure: internet
+      criticality: critical
+      data_classification: confidential
+      owner: "Equipe Digital"
+      state: mitigated
+  asset_selectors:
+    - source: scanner
+      query: "cve:CVE-2021-44228 AND state:open"
+      matched: 37
+
+  exploitation:
+    status: suspected
+    incident_ref: "INC-2021-1207"
+
+  business_impact:
+    confidentiality: high
+    integrity: high
+    availability: medium
+    services: ["Espace client", "Paiement en ligne"]
+    data_at_risk: [personal, financial]
+    regulatory: [gdpr, pci_dss]
+
+  decision:
+    action: mitigate
+    justification: "Vendor patch unavailable for the payment appliance; WAF and egress filtering in the meantime."
+    decided_by: "CISO"
+    decided_on: 2021-12-11
+    review_on: 2021-12-21
+    approved_by: "CIO"
+
+  remediation:
+    owner: "Infra team"
+    sla: "P1-7d"
+    due: 2021-12-18
+    status: in_progress
+    tickets:
+      - { system: jira, id: SEC-3321, url: "https://jira.example.internal/browse/SEC-3321" }
+
+  communication:
+    - { audience: soc, date: 2021-12-10, channel: chat, by: "Internal CERT" }
+    - { audience: management, date: 2021-12-11, channel: meeting, by: "CISO" }
+    - { audience: dpo, date: 2021-12-11, channel: email, by: "CISO" }
+    - { audience: cert, date: 2021-12-14, channel: report, by: "CISO" }
+
+  score:
+    value: 7.5
+    level: high
+    method: cir-risk/0.1
+
+  notes:
+    - date: 2021-12-12
+      author: "SOC"
+      text: "JNDI attempts blocked by the WAF since 2021-12-10; one suspicious outbound LDAP request under analysis."

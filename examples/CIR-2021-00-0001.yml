@@ -1,0 +1,145 @@
+# Public vulnerability: Log4Shell (CVE-2021-44228)
+cir_version: "0.1"
+
+meta:
+  id: CIR-2021-00-0001
+  revision: 1
+  title: "Log4Shell: JNDI lookup RCE in Apache Log4j 2"
+  status: published
+  created: 2026-10-12
+  updated: 2026-10-12
+  tlp: CLEAR
+  aliases: [log4shell]
+
+core:
+  tlp: CLEAR
+  summary: "Remote code execution via JNDI lookups in logged strings in Apache Log4j 2."
+  details: |
+    Log4j 2 evaluates `${jndi:...}` lookups in logged messages. An attacker who
+    controls any logged string (HTTP header, form field, username...) can make
+    the application load and execute a remote Java class over LDAP/RMI.
+  disclosed: 2021-12-10
+
+  identifiers:
+    - type: cve
+      id: CVE-2021-44228
+    - type: ghsa
+      id: GHSA-jfh8-c2jp-5v3q
+
+  references:
+    - type: advisory
+      url: https://logging.apache.org/log4j/2.x/security.html
+    - type: report
+      url: https://nvd.nist.gov/vuln/detail/CVE-2021-44228
+
+  affected:
+    - product:
+        vendor: Apache
+        name: log4j-core
+        purl: pkg:maven/org.apache.logging.log4j/log4j-core
+      ranges:
+        - type: ecosystem
+          events:
+            - introduced: "2.0-beta9"
+            - fixed: "2.3.1"
+            - introduced: "2.4"
+            - fixed: "2.12.2"
+            - introduced: "2.13.0"
+            - fixed: "2.15.0"
+
+  weaknesses: [CWE-502, CWE-400, CWE-20, CWE-917]
+
+  severity:
+    - type: cvss_v3.1
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
+      score: 10.0
+      source: nvd
+
+  remediations:
+    - type: upgrade
+      description: "Upgrade log4j-core to 2.17.1+ (Java 8), 2.12.4+ (Java 7) or 2.3.2+ (Java 6), which also cover the follow-up CVEs."
+      status: available
+      reference: https://logging.apache.org/log4j/2.x/security.html
+    - type: workaround
+      description: "Remove the JndiLookup class from the classpath: zip -q -d log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class"
+      status: available
+
+threat_intel:
+  tlp: CLEAR
+  updated: 2026-10-12
+
+  exploitation:
+    maturity: weaponized
+    in_the_wild: true
+    first_seen: 2021-12-01
+    exploits:
+      - type: module
+        source: metasploit
+        url: https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/multi/http/log4shell_header_injection.rb
+
+  priority:
+    value: 10.0
+    level: critical
+    method: cir-risk/0.1
+
+  signals:
+    kev:
+      listed: true
+      date_added: 2021-12-10
+      ransomware_use: known
+    epss:
+      score: 0.99999
+      percentile: 1.0
+
+  actors:
+    - refs: [{ type: mitre, id: G0059 }]
+      name: Magic Hound (APT35)
+      confidence: high
+      sources: [s2]
+    - refs: [{ type: mitre, id: G0143 }]
+      name: Aquatic Panda
+      confidence: high
+      sources: [s2]
+    - refs: [{ type: mitre, id: G0032 }]
+      name: Lazarus Group
+      confidence: medium
+      sources: [s2]
+
+  malware:
+    - name: Khonsari
+      family_type: ransomware
+      confidence: high
+      sources: [s2]
+    - name: Mirai
+      family_type: botnet
+      confidence: high
+      sources: [s2]
+
+  attack:
+    - { technique: T1190, tactic: TA0001 }
+    - { technique: T1059, tactic: TA0002 }
+    - { technique: T1105, tactic: TA0011 }
+
+  targeting:
+    sectors: [all]
+
+  iocs:
+    - type: pattern
+      value: "${jndi:"
+      confidence: high
+      sources: [s3]
+
+  detections:
+    - format: sigma
+      name: "Log4j RCE CVE-2021-44228 (SigmaHQ)"
+      url: https://github.com/SigmaHQ/sigma
+
+  timeline:
+    - { date: 2021-12-01, event: "Earliest observed exploitation", sources: [s3] }
+    - { date: 2021-12-09, event: "Public PoC released", sources: [s3] }
+    - { date: 2021-12-10, event: "Added to CISA KEV", sources: [s1] }
+
+  sources:
+    - { id: s1, name: "CISA KEV", url: "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", reliability: A }
+    - { id: s2, name: "MITRE ATT&CK and vendor reports", url: "https://attack.mitre.org" }
+    - { id: s3, name: "Cloudflare", url: "https://blog.cloudflare.com/exploitation-of-cve-2021-44228-before-public-disclosure-and-evolution-of-waf-evasion-patterns/" }
