@@ -62,6 +62,22 @@ Whether a record is public is **derived from the code** (first character is `0`)
 - `based_on`, when set, matches a valid `id` pattern and differs from `id`.
 - No layer `tlp` is less restrictive than `meta.tlp`.
 
+### Authorities registry
+
+Each entry of [`authorities.yml`](./authorities.yml):
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `code` | string | yes | Public `CODE`, `^0[A-Z0-9]{1,7}$`. Unique in the registry. |
+| `name` | string | yes | Name of the issuing organization. |
+| `contact` | string | no | Contact address. |
+| `scope` | string | yes | What the authority publishes. |
+| `fingerprint` | string | yes, except `00` | OpenPGP fingerprint of the signing key, 40 uppercase hex chars, no spaces. |
+| `public_key` | string | yes, except `00` | ASCII-armored OpenPGP public key. Its fingerprint must equal `fingerprint`. |
+| `key_expires` | date | yes if the key expires | Expiration date of the key. Must equal the expiration in `public_key`. Omitted for a key without expiration. |
+
+The key is the one the authority signs its public records with. Rotating a key or extending its expiration goes through a pull request, like adding an authority.
+
 ## Layers: common rules
 
 - Every layer present in a record must have a `tlp`.

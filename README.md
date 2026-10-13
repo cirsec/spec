@@ -71,7 +71,7 @@ The first character of `CODE` decides whether a record is public:
 | `0` + 1 to 7 alphanumerics, e.g. `0CERTFR` | Registered public authority, listed in [`authorities.yml`](./authorities.yml) |
 | Anything not starting with `0`, e.g. `LAB`, `SNOW`, `P01` | Internal code, freely managed by the organization (not globally unique) |
 
-Public authorities are added to the registry through a pull request reviewed by the maintainers. Validators reject a public code that is not in the registry.
+Public authorities are added to the registry through a pull request reviewed by the maintainers. Each one publishes its OpenPGP signing key (fingerprint and armored public key) in the registry. Validators reject a public code that is not in the registry.
 
 ## Template
 

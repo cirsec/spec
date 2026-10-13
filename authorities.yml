@@ -7,3 +7,21 @@ authorities:
     name: "CIR Project"
     contact: ""
     scope: "Root authority, default issuer for public records"
+
+  - code: "0MLAB"
+    name: "mlab"
+    contact: "hello@mlab.sh"
+    scope: "Vulnerabilities and threat intelligence published by mlab.sh"
+    fingerprint: "0151539CE28748166DD7FEA47CE6A877BE61E06F"
+    key_expires: "2028-10-12"
+    public_key: |
+      -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+      mDMEas53TBYJKwYBBAHaRw8BAQdAI2zUW7bBDMNAnAy7bvo7Swf4D6OmhZEbX6yC
+      Oiu1dwW0Im1sYWIgQ0lSIGF1dGhvcml0eSA8aGVsbG9AbWxhYi5zaD6ItQQTFgoA
+      XRYhBAFRU5zih0gWbdf+pHzmqHe+YeBvBQJqzndMGxSAAAAAAAQADm1hbnUyLDIu
+      NSsxLjEyLDAsMwIbAwUJA8JnAAULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAK
+      CRB85qh3vmHgb6z1AP9DE1pyAMe4GiwPe/3CT5ba9rIBOHZZCqKbce0lpD7+nwD/
+      SUe4PUDOo4RC7TzImaV6XoTVF4OkW5JC9vxe8SEjFwA=
+      =5n3l
+      -----END PGP PUBLIC KEY BLOCK-----
