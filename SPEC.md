@@ -1,6 +1,6 @@
 # CIR Specification
 
-> **Status: draft (v0.1).** Sections are specified one layer at a time.
+> **Status: draft (v0.5).** Sections are specified one layer at a time.
 
 ## Conventions
 
@@ -12,7 +12,7 @@
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `cir_version` | string | yes | Version of the CIR specification the record follows, e.g. `"0.1"`. |
+| `cir_version` | string | yes | Version of the CIR specification the record follows, e.g. `"0.5"`. |
 | `meta` | object | yes | Identity and lifecycle of the record. |
 | `core` | object | no | Layer 1. |
 | `threat_intel` | object | no | Layer 2. |
@@ -43,9 +43,30 @@ CIR-YYYY-CODE-NNNN
 ```
 
 - **Public** record: `^CIR-\d{4}-0[A-Z0-9]{0,7}-\d{4,}$`. `CODE` must be listed in [`authorities.yml`](./authorities.yml). `00` is the root authority.
-- **Internal** record: `^CIR-\d{4}-[A-Z1-9][A-Z0-9]{1,7}-\d{4,}$`. Managed freely by the organization, not globally unique.
+- **Mirror** record: `^CIR-\d{4}-1[A-Z0-9]{1,7}-\d{4,}$`. Auto-generated from an external database, see [Mirror records](#mirror-records).
+- **Internal** record: `^CIR-\d{4}-[A-Z2-9][A-Z0-9]{1,7}-\d{4,}$`. Managed freely by the organization, not globally unique.
 
-Whether a record is public is **derived from the code** (first character is `0`); there is no separate field for it.
+Whether a record is public is **derived from the code**: first character `0` (authority) or `1` (mirror) is public, anything else is internal. There is no separate field for it.
+
+### Mirror records
+
+A mirror code (`1` + 1 to 7 alphanumerics) mirrors an external database: one CIR per upstream entry, generated automatically by the CIR project, never written by hand. Its `id` is derived from the upstream id, so anyone can compute it without a lookup.
+
+| Code | Mirrors | Mapping | Example |
+|---|---|---|---|
+| `1CVE` | [CVE](https://www.cve.org) | `CVE-YYYY-N` → `CIR-YYYY-1CVE-N` | `CVE-2021-44228` → `CIR-2021-1CVE-44228` |
+
+Mirror codes are defined by this specification only; other `1` codes are reserved.
+
+A mirror record:
+
+- contains only `meta`, `core` and `threat_intel`, all `CLEAR`. No `posture`, no `context`.
+- has `core.identifiers` containing the upstream id (for `1CVE`, a `cve` entry equal to the id mapped back).
+- is filled from public sources only (for `1CVE`: CVE record, NVD, CISA KEV, EPSS); CVSS scores carry `source: nvd` or `vendor`, never `issuer`.
+- is regenerated when its sources change: `revision` and `updated` are bumped, nothing is merged by hand.
+- has `status: rejected` when the upstream entry is rejected.
+
+To add knowledge on top of a mirror, write a record with `meta.based_on` pointing to it: an authority record (`0` code) for public analysis, an internal record for `posture` / `context`.
 
 ### TLP rules
 
@@ -56,8 +77,9 @@ Whether a record is public is **derived from the code** (first character is `0`)
 
 ### Validation
 
-- `id` matches one of the two patterns above.
-- Public `id` → `CODE` exists in `authorities.yml`.
+- `id` matches one of the three patterns above.
+- Authority `id` (`0` code) → `CODE` exists in `authorities.yml`.
+- Mirror `id` (`1` code) → `CODE` is a defined mirror code and the record follows the [mirror rules](#mirror-records).
 - `updated` >= `created`.
 - `based_on`, when set, matches a valid `id` pattern and differs from `id`.
 - No layer `tlp` is less restrictive than `meta.tlp`.
@@ -82,7 +104,7 @@ The key is the one the authority signs its public records with. Rotating a key o
 
 - Every layer present in a record must have a `tlp`.
 - A layer can be omitted entirely.
-- A record with `meta.based_on` inherits the `core` and `threat_intel` layers of its parent when it omits them. This is the normal shape of an internal record adding `posture` and/or `context` to a public one.
+- A record with `meta.based_on` inherits the `core` and `threat_intel` layers of its parent when it omits them. This is the normal shape of an internal record adding `posture` and/or `context` to a public one, typically a `1CVE` mirror.
 
 ## `core` (layer 1)
 

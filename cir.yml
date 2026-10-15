@@ -1,12 +1,12 @@
-# CIR - Cyber Issue Record template (draft v0.1)
+# CIR - Cyber Issue Record template (draft v0.5)
 # Full template with every field. Remove or leave empty what you don't use.
 # Each layer has its own TLP: export to an audience = drop the layers it can't see.
 
-cir_version: "0.1"
+cir_version: "0.5"
 
 # --- META: identity and lifecycle of the record ---
 meta:
-  id: ""                # CIR-YYYY-CODE-NNNN, CODE starting with 0 = public, else internal
+  id: ""                # CIR-YYYY-CODE-NNNN, CODE starting with 0 = authority, 1 = mirror (e.g. 1CVE), else internal
   revision: 1           # integer, bump on every update
   title: ""
   status: ""            # draft | published | rejected | withdrawn

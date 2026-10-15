@@ -1,5 +1,5 @@
 # Public vulnerability: Log4Shell (CVE-2021-44228)
-cir_version: "0.1"
+cir_version: "0.5"
 
 meta:
   id: CIR-2021-00-0001

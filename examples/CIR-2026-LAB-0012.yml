@@ -1,5 +1,5 @@
 # Internal issue: pentest finding, no CVE (fictional organization)
-cir_version: "0.1"
+cir_version: "0.5"
 
 meta:
   id: CIR-2026-LAB-0012

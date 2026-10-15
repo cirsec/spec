@@ -1,7 +1,7 @@
 # Internal record extending a public one (fictional organization).
 # core and threat_intel are inherited from the parent (meta.based_on).
 # Exported to the group CERT, the TLP filter keeps posture (AMBER) and drops context (RED).
-cir_version: "0.1"
+cir_version: "0.5"
 
 meta:
   id: CIR-2021-GRP-0003
