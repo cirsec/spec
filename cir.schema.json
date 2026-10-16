@@ -1,0 +1,1710 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cirsec.org/schema/cir.schema.json",
+  "title": "CIR record",
+  "description": "Cyber Issue Record, draft v0.5. Structural rules of SPEC.md. Not covered here, left to validators: CVSS score vs vector, date ordering, sources[] references, the authorities registry and the 1CVE identifier match.",
+  "type": "object",
+  "required": [
+    "cir_version",
+    "meta"
+  ],
+  "properties": {
+    "cir_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "meta": {
+      "$ref": "#/$defs/meta"
+    },
+    "core": {
+      "$ref": "#/$defs/core"
+    },
+    "threat_intel": {
+      "$ref": "#/$defs/threat_intel"
+    },
+    "posture": {
+      "$ref": "#/$defs/posture"
+    },
+    "context": {
+      "$ref": "#/$defs/context"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "Mirror records (1 codes) only carry meta, core and threat_intel, all CLEAR.",
+      "if": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "id": {
+                "pattern": "^CIR-\\d{4}-1"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "posture"
+              ]
+            },
+            {
+              "required": [
+                "context"
+              ]
+            }
+          ]
+        },
+        "properties": {
+          "core": {
+            "properties": {
+              "tlp": {
+                "const": "CLEAR"
+              }
+            }
+          },
+          "threat_intel": {
+            "properties": {
+              "tlp": {
+                "const": "CLEAR"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "Public records (0 or 1 codes) carry no internal identifier.",
+      "if": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "id": {
+                "pattern": "^CIR-\\d{4}-[01]"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "core": {
+            "properties": {
+              "identifiers": {
+                "items": {
+                  "properties": {
+                    "type": {
+                      "not": {
+                        "const": "internal"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "tlp": {
+      "enum": [
+        "CLEAR",
+        "GREEN",
+        "AMBER",
+        "AMBER+STRICT",
+        "RED"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "cir_id": {
+      "type": "string",
+      "pattern": "^CIR-\\d{4}-(0[A-Z0-9]{0,7}|1[A-Z0-9]{1,7}|[A-Z2-9][A-Z0-9]{1,7})-\\d{4,}$"
+    },
+    "cve_id": {
+      "type": "string",
+      "pattern": "^CVE-\\d{4}-\\d{4,}$"
+    },
+    "level": {
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "score": {
+      "type": "object",
+      "required": [
+        "value",
+        "level",
+        "method"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "level": {
+          "$ref": "#/$defs/level"
+        },
+        "method": {
+          "type": "string"
+        }
+      }
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "title",
+        "status",
+        "created",
+        "updated"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/cir_id"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "published",
+            "rejected",
+            "withdrawn"
+          ]
+        },
+        "created": {
+          "$ref": "#/$defs/date"
+        },
+        "updated": {
+          "$ref": "#/$defs/date"
+        },
+        "tlp": {
+          "$ref": "#/$defs/tlp"
+        },
+        "based_on": {
+          "$ref": "#/$defs/cir_id"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          }
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "contact": {
+                "type": "string"
+              },
+              "org": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "date",
+              "change"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "author": {
+                "type": "string"
+              },
+              "change": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "core": {
+      "type": "object",
+      "required": [
+        "tlp",
+        "summary"
+      ],
+      "properties": {
+        "tlp": {
+          "$ref": "#/$defs/tlp"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "details": {
+          "type": "string"
+        },
+        "disclosed": {
+          "$ref": "#/$defs/date"
+        },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "cve",
+                  "ghsa",
+                  "osv",
+                  "vendor",
+                  "internal",
+                  "other"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "cve"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "id": {
+                      "$ref": "#/$defs/cve_id"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "ghsa"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "id": {
+                      "pattern": "^GHSA(-[23456789cfghjmpqrvwx]{4}){3}$"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "url"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "advisory",
+                  "fix",
+                  "report",
+                  "article",
+                  "package",
+                  "web",
+                  "other"
+                ]
+              },
+              "url": {
+                "$ref": "#/$defs/url"
+              }
+            }
+          }
+        },
+        "affected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "product"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "ranges"
+                ]
+              },
+              {
+                "required": [
+                  "versions"
+                ]
+              }
+            ],
+            "properties": {
+              "product": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "vendor": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "purl": {
+                    "type": "string"
+                  },
+                  "cpe": {
+                    "type": "string"
+                  }
+                }
+              },
+              "ranges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/range"
+                }
+              },
+              "versions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "weaknesses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CWE-\\d+$"
+          }
+        },
+        "severity": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "vector",
+              "score",
+              "source"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "cvss_v3.1",
+                  "cvss_v4.0"
+                ]
+              },
+              "vector": {
+                "type": "string",
+                "pattern": "^CVSS:(3\\.1|4\\.0)/"
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "source": {
+                "enum": [
+                  "nvd",
+                  "vendor",
+                  "issuer"
+                ]
+              }
+            }
+          }
+        },
+        "remediations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "description",
+              "status"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "upgrade",
+                  "patch",
+                  "config",
+                  "workaround",
+                  "none"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "available",
+                  "planned",
+                  "none"
+                ]
+              },
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "reference": {
+                "$ref": "#/$defs/url"
+              },
+              "ranges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/range"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": [
+        "type",
+        "events"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "semver",
+            "ecosystem",
+            "git"
+          ]
+        },
+        "repo": {
+          "$ref": "#/$defs/url"
+        },
+        "events": {
+          "type": "array",
+          "contains": {
+            "required": [
+              "introduced"
+            ]
+          },
+          "items": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "introduced": {
+                "type": "string"
+              },
+              "fixed": {
+                "type": "string"
+              },
+              "last_affected": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "type": {
+            "const": "git"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "repo"
+        ]
+      }
+    },
+    "entity": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "mitre",
+                  "mlab",
+                  "misp",
+                  "malpedia",
+                  "other"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "first_seen": {
+          "$ref": "#/$defs/date"
+        },
+        "sources": {
+          "$ref": "#/$defs/source_refs"
+        }
+      }
+    },
+    "threat_intel": {
+      "type": "object",
+      "required": [
+        "tlp",
+        "updated"
+      ],
+      "properties": {
+        "tlp": {
+          "$ref": "#/$defs/tlp"
+        },
+        "updated": {
+          "$ref": "#/$defs/date"
+        },
+        "exploitation": {
+          "type": "object",
+          "properties": {
+            "maturity": {
+              "enum": [
+                "none",
+                "poc",
+                "functional",
+                "weaponized"
+              ]
+            },
+            "in_the_wild": {
+              "enum": [
+                true,
+                false,
+                "unknown"
+              ]
+            },
+            "first_seen": {
+              "$ref": "#/$defs/date"
+            },
+            "exploits": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "url"
+                ],
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "poc",
+                      "module",
+                      "template",
+                      "kit",
+                      "writeup"
+                    ]
+                  },
+                  "source": {
+                    "enum": [
+                      "github",
+                      "exploitdb",
+                      "metasploit",
+                      "nuclei",
+                      "other"
+                    ]
+                  },
+                  "url": {
+                    "$ref": "#/$defs/url"
+                  },
+                  "date": {
+                    "$ref": "#/$defs/date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "priority": {
+          "$ref": "#/$defs/score"
+        },
+        "signals": {
+          "type": "object",
+          "properties": {
+            "kev": {
+              "type": "object",
+              "properties": {
+                "listed": {
+                  "type": "boolean"
+                },
+                "date_added": {
+                  "$ref": "#/$defs/date"
+                },
+                "ransomware_use": {
+                  "enum": [
+                    "known",
+                    "unknown"
+                  ]
+                }
+              }
+            },
+            "epss": {
+              "type": "object",
+              "properties": {
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "percentile": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            }
+          }
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/entity"
+              },
+              {
+                "properties": {
+                  "refs": {
+                    "items": {
+                      "if": {
+                        "properties": {
+                          "type": {
+                            "const": "mitre"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "id": {
+                            "pattern": "^G\\d{4}$"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "malware": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/entity"
+              },
+              {
+                "properties": {
+                  "refs": {
+                    "items": {
+                      "if": {
+                        "properties": {
+                          "type": {
+                            "const": "mitre"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "id": {
+                            "pattern": "^S\\d{4}$"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "family_type": {
+                    "enum": [
+                      "ransomware",
+                      "botnet",
+                      "miner",
+                      "rat",
+                      "loader",
+                      "webshell",
+                      "other"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "campaigns": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/entity"
+              },
+              {
+                "properties": {
+                  "refs": {
+                    "items": {
+                      "if": {
+                        "properties": {
+                          "type": {
+                            "const": "mitre"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "id": {
+                            "pattern": "^C\\d{4}$"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "attack": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "technique",
+              "tactic"
+            ],
+            "properties": {
+              "technique": {
+                "type": "string",
+                "pattern": "^T\\d{4}(\\.\\d{3})?$"
+              },
+              "tactic": {
+                "type": "string",
+                "pattern": "^TA\\d{4}$"
+              }
+            }
+          }
+        },
+        "targeting": {
+          "type": "object",
+          "properties": {
+            "sectors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              }
+            }
+          }
+        },
+        "iocs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "value"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "ip",
+                  "domain",
+                  "url",
+                  "sha256",
+                  "sha1",
+                  "md5",
+                  "pattern",
+                  "other"
+                ]
+              },
+              "value": {
+                "type": "string"
+              },
+              "first_seen": {
+                "$ref": "#/$defs/date"
+              },
+              "last_seen": {
+                "$ref": "#/$defs/date"
+              },
+              "confidence": {
+                "$ref": "#/$defs/confidence"
+              },
+              "sources": {
+                "$ref": "#/$defs/source_refs"
+              }
+            }
+          }
+        },
+        "ioc_bundles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "format",
+              "url"
+            ],
+            "properties": {
+              "format": {
+                "enum": [
+                  "stix",
+                  "misp",
+                  "csv"
+                ]
+              },
+              "url": {
+                "$ref": "#/$defs/url"
+              }
+            }
+          }
+        },
+        "detections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "format",
+              "url"
+            ],
+            "properties": {
+              "format": {
+                "enum": [
+                  "sigma",
+                  "yara",
+                  "suricata",
+                  "snort",
+                  "nuclei",
+                  "kql",
+                  "spl"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "$ref": "#/$defs/url"
+              }
+            }
+          }
+        },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "date",
+              "event"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "event": {
+                "type": "string"
+              },
+              "sources": {
+                "$ref": "#/$defs/source_refs"
+              }
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "$ref": "#/$defs/url"
+              },
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "reliability": {
+                "enum": [
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E",
+                  "F"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "posture": {
+      "$comment": "No free text, no numbers, no names: every object is closed.",
+      "type": "object",
+      "required": [
+        "tlp",
+        "updated",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tlp": {
+          "$ref": "#/$defs/tlp"
+        },
+        "updated": {
+          "$ref": "#/$defs/date"
+        },
+        "entity": {
+          "type": "string",
+          "pattern": "^[A-Z0-9][A-Z0-9-]{0,31}$"
+        },
+        "status": {
+          "type": "object",
+          "required": [
+            "state"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "enum": [
+                "not_affected",
+                "affected",
+                "mitigated",
+                "fixed",
+                "under_investigation"
+              ]
+            },
+            "justification": {
+              "enum": [
+                "component_not_present",
+                "vulnerable_code_not_present",
+                "vulnerable_code_not_in_execute_path",
+                "vulnerable_code_cannot_be_controlled_by_adversary",
+                "inline_mitigations_already_exist"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "state": {
+                "const": "not_affected"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "justification"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "justification"
+              ]
+            }
+          }
+        },
+        "prerequisites": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "attack_vector": {
+              "enum": [
+                "network",
+                "adjacent",
+                "local",
+                "physical"
+              ]
+            },
+            "privileges": {
+              "enum": [
+                "none",
+                "low",
+                "high"
+              ]
+            },
+            "user_interaction": {
+              "type": "boolean"
+            },
+            "configuration": {
+              "enum": [
+                "default",
+                "non_default"
+              ]
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "feature_enabled",
+                  "specific_os",
+                  "specific_version",
+                  "network_position",
+                  "valid_account",
+                  "other"
+                ]
+              }
+            }
+          }
+        },
+        "exposure": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reachability": {
+              "enum": [
+                "internet",
+                "partner",
+                "internal",
+                "isolated",
+                "not_deployed"
+              ]
+            },
+            "prevalence": {
+              "enum": [
+                "none",
+                "rare",
+                "common",
+                "widespread"
+              ]
+            }
+          }
+        },
+        "controls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "control",
+              "effect",
+              "coverage",
+              "validated"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "control": {
+                "enum": [
+                  "segmentation",
+                  "waf",
+                  "ips",
+                  "edr",
+                  "mfa",
+                  "egress_filtering",
+                  "hardening",
+                  "app_allowlisting",
+                  "virtual_patching",
+                  "other"
+                ]
+              },
+              "effect": {
+                "enum": [
+                  "blocks",
+                  "reduces",
+                  "detects"
+                ]
+              },
+              "coverage": {
+                "enum": [
+                  "partial",
+                  "full"
+                ]
+              },
+              "validated": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "detection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "capability": {
+              "enum": [
+                "none",
+                "partial",
+                "full"
+              ]
+            },
+            "layers": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "network",
+                  "endpoint",
+                  "logs",
+                  "waf",
+                  "application"
+                ]
+              }
+            },
+            "validated": {
+              "type": "boolean"
+            }
+          }
+        },
+        "impact": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enables": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "code_execution",
+                  "data_access",
+                  "privilege_escalation",
+                  "lateral_movement",
+                  "persistence",
+                  "denial_of_service"
+                ]
+              }
+            },
+            "blast_radius": {
+              "enum": [
+                "component",
+                "host",
+                "segment",
+                "domain",
+                "organization",
+                "supply_chain"
+              ]
+            },
+            "chained_with": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/cir_id"
+                  },
+                  {
+                    "$ref": "#/$defs/cve_id"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "remediation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "feasibility": {
+              "enum": [
+                "easy",
+                "moderate",
+                "hard",
+                "blocked"
+              ]
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "legacy",
+                  "vendor_dependency",
+                  "downtime_required",
+                  "certification",
+                  "third_party_managed"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "required": [
+        "tlp",
+        "updated"
+      ],
+      "properties": {
+        "tlp": {
+          "$ref": "#/$defs/tlp"
+        },
+        "updated": {
+          "$ref": "#/$defs/date"
+        },
+        "org": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ref"
+            ],
+            "properties": {
+              "ref": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "server",
+                  "workstation",
+                  "application",
+                  "database",
+                  "network_device",
+                  "cloud_resource",
+                  "container",
+                  "saas",
+                  "ot",
+                  "other"
+                ]
+              },
+              "environment": {
+                "enum": [
+                  "prod",
+                  "preprod",
+                  "dev",
+                  "test"
+                ]
+              },
+              "exposure": {
+                "enum": [
+                  "internet",
+                  "partner",
+                  "internal",
+                  "isolated"
+                ]
+              },
+              "criticality": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ]
+              },
+              "data_classification": {
+                "enum": [
+                  "public",
+                  "internal",
+                  "confidential",
+                  "secret"
+                ]
+              },
+              "owner": {
+                "type": "string"
+              },
+              "state": {
+                "enum": [
+                  "affected",
+                  "mitigated",
+                  "fixed",
+                  "not_affected"
+                ]
+              }
+            }
+          }
+        },
+        "asset_selectors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "source",
+              "query"
+            ],
+            "properties": {
+              "source": {
+                "enum": [
+                  "cmdb",
+                  "edr",
+                  "scanner",
+                  "cloud",
+                  "other"
+                ]
+              },
+              "query": {
+                "type": "string"
+              },
+              "matched": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "exploitation": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "none",
+                "suspected",
+                "confirmed"
+              ]
+            },
+            "incident_ref": {
+              "type": "string"
+            }
+          },
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "suspected",
+                  "confirmed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "incident_ref"
+            ]
+          }
+        },
+        "business_impact": {
+          "type": "object",
+          "properties": {
+            "confidentiality": {
+              "$ref": "#/$defs/level"
+            },
+            "integrity": {
+              "$ref": "#/$defs/level"
+            },
+            "availability": {
+              "$ref": "#/$defs/level"
+            },
+            "services": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "data_at_risk": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "personal",
+                  "financial",
+                  "health",
+                  "credentials",
+                  "ip",
+                  "other"
+                ]
+              }
+            },
+            "regulatory": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "gdpr",
+                  "nis2",
+                  "dora",
+                  "pci_dss",
+                  "hds",
+                  "other"
+                ]
+              }
+            }
+          }
+        },
+        "decision": {
+          "type": "object",
+          "required": [
+            "action"
+          ],
+          "properties": {
+            "action": {
+              "enum": [
+                "fix",
+                "mitigate",
+                "accept",
+                "transfer",
+                "monitor",
+                "false_positive"
+              ]
+            },
+            "justification": {
+              "type": "string"
+            },
+            "decided_by": {
+              "type": "string"
+            },
+            "decided_on": {
+              "$ref": "#/$defs/date"
+            },
+            "review_on": {
+              "$ref": "#/$defs/date"
+            },
+            "approved_by": {
+              "type": "string"
+            }
+          },
+          "if": {
+            "properties": {
+              "action": {
+                "enum": [
+                  "accept",
+                  "transfer",
+                  "monitor"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "review_on"
+            ]
+          }
+        },
+        "remediation": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "owner": {
+              "type": "string"
+            },
+            "assignee": {
+              "type": "string"
+            },
+            "sla": {
+              "type": "string"
+            },
+            "due": {
+              "$ref": "#/$defs/date"
+            },
+            "status": {
+              "enum": [
+                "open",
+                "in_progress",
+                "resolved",
+                "verified",
+                "reopened"
+              ]
+            },
+            "tickets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "system": {
+                    "enum": [
+                      "jira",
+                      "plane",
+                      "servicenow",
+                      "gitlab",
+                      "github",
+                      "other"
+                    ]
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "$ref": "#/$defs/url"
+                  }
+                }
+              }
+            },
+            "verified_on": {
+              "$ref": "#/$defs/date"
+            },
+            "verified_by": {
+              "type": "string"
+            },
+            "verification_method": {
+              "enum": [
+                "rescan",
+                "pentest",
+                "manual",
+                "other"
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "status": {
+                "const": "verified"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "verified_on"
+            ]
+          }
+        },
+        "communication": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "audience",
+              "date"
+            ],
+            "properties": {
+              "audience": {
+                "enum": [
+                  "soc",
+                  "it_ops",
+                  "dev",
+                  "ciso",
+                  "management",
+                  "legal",
+                  "dpo",
+                  "business",
+                  "cert",
+                  "vendor",
+                  "regulator"
+                ]
+              },
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "channel": {
+                "enum": [
+                  "email",
+                  "ticket",
+                  "meeting",
+                  "chat",
+                  "report",
+                  "other"
+                ]
+              },
+              "by": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "score": {
+          "$ref": "#/$defs/score"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "date",
+              "text"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "#/$defs/date"
+              },
+              "author": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

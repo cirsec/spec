@@ -78,12 +78,12 @@ Public authorities are added to the registry through a pull request reviewed by 
 
 ## Template
 
-The full template, with every field, is in [`cir.yml`](./cir.yml). The field-level specification is in [`SPEC.md`](./SPEC.md).
+The full template, with every field, is in [`cir.yml`](./cir.yml). The field-level specification is in [`SPEC.md`](./SPEC.md), the JSON Schema in [`cir.schema.json`](./cir.schema.json), and the version history in [`CHANGELOG.md`](./CHANGELOG.md). To contribute, see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Roadmap
 
 - [x] Field-level specification (types, enums, required fields)
-- [ ] JSON Schema as the source of truth
+- [x] JSON Schema: [`cir.schema.json`](./cir.schema.json)
 - [x] Scoring model: `cir-risk/0.1`
 - [x] Examples: [`examples/`](./examples/)
 - [ ] Reference CLI: validate, score, export by TLP
